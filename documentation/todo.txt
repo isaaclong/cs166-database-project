@@ -1,0 +1,52 @@
+Useful Functions
+
+-executeUpdate
+  for CREATE, INSERT, UPDATE, DELETE, DROP statements
+-executeQueryAndPrintResult
+-executeQueryAndReturnResult
+-executeQuery
+
+Done
+
+-New User Registration
+  New users can set up accounts and provide username, password, email through
+  commandline interface. Duplicate usernames are detected, and are not allowed.
+  (Name and dateofbirth remain empty...do we need to get these as well?).
+-User Login/Logout
+  (Provided for us)
+
+TODO
+
+Bare Minimum
+
+-Change password
+  Users can change password
+-Search people
+  Users can search through entire usr relation for particular names, and return
+  a list of matches/close matches. Can probably be done with regular expressions
+  and some kind of simple ranking function, or use an already existing library
+-Send Connection Request
+  User can send connection requests within 3 levels of connection. New users
+  who have 0 connections can make up to 5 new connections without this rule
+  applying.
+-Accept or reject Connection Request
+-View Friends and go to friend's profile
+  each time you view a profile you can either send a connection request or send 
+  a message to them
+-Send message to anyone on network
+-View Messages and have option to delete messages
+
+-Scripts
+  for bulkloading data for testing, and for triggers/stored procedures/indexes
+  if applicable
+
+-Project report
+  1-2 pages describing who did what, any problems we encountered, etc. More details
+  in project requirments
+
+If We Have Time
+
+-Robust UI
+-Triggers and stored procedures
+-Performance tuning and indexing
+-Anything else fancy we can add
