@@ -14,13 +14,13 @@ Done
   (Name and dateofbirth remain empty...do we need to get these as well?).
 -User Login/Logout
   (Provided for us)
+-Change password
+  Users can change password
 
 TODO
 
 Bare Minimum
 
--Change password
-  Users can change password
 -Search people
   Users can search through entire usr relation for particular names, and return
   a list of matches/close matches. Can probably be done with regular expressions

@@ -251,18 +251,24 @@ public class ProfNetwork {
          boolean keepon = true;
          while(keepon) {
             // These are sample SQL statements
-            System.out.println("MAIN MENU");
-            System.out.println("---------");
+            System.out.println("LOGIN");
+            System.out.println("------");
             System.out.println("1. Create user");
             System.out.println("2. Log in");
             System.out.println("9. < EXIT");
             String authorisedUser = null;
-            switch (readChoice()){
+            switch (readChoice()) {
                case 1: CreateUser(esql); break;
-               case 2: authorisedUser = LogIn(esql); break;
+               case 2: { 
+                   authorisedUser = LogIn(esql); 
+                   if(authorisedUser == null) 
+                       System.out.println("Invalid username or password! Please try logging in again"); 
+                   break; 
+               }
                case 9: keepon = false; break;
                default : System.out.println("Unrecognized choice!"); break;
             }//end switch
+
             if (authorisedUser != null) {
               boolean usermenu = true;
               while(usermenu) {
@@ -276,7 +282,7 @@ public class ProfNetwork {
                 System.out.println("9. Log out");
                 switch (readChoice()){
                    case 1: /*FriendList(esql);*/ break;
-                   case 2: /*UpdateProfile(esql);*/ break;
+                   case 2: UpdateProfile(esql, authorisedUser); break;
                    case 3: /*NewMessage(esql);*/ break;
                    case 4: /*SendRequest(esql);*/ break;
                    case 9: usermenu = false; break;
@@ -337,16 +343,16 @@ public class ProfNetwork {
          System.out.print("\tEnter user login: ");
          String login = in.readLine();
 
-         // TODO: make sure login isn't already taken.
+         // make sure login isn't already taken.
          // Should this be done using a pre-query or responding to an insert "error"
          // (I believe that users are unique in the db); do we have to handle this?
-
-         String checkUsersQuery = "SELECT userid FROM USR";
-         List<List<String>> userIds = esql.executeQueryAndReturnResult(checkUsersQuery);
-         while(userIds.get(0).contains(login)) {
+         String checkUsersQuery = String.format("SELECT userid FROM usr WHERE userid = '%s'", login); 
+         int userExists = 0;
+         while((userExists = esql.executeQuery(checkUsersQuery)) > 0) {
             System.out.print("\tSorry, that username is taken! Please try another.\n");
             System.out.print("\tEnter user login: ");
             login = in.readLine();
+            checkUsersQuery = String.format("SELECT userid FROM usr WHERE userid = '%s'", login); 
          }
 
          System.out.print("\tEnter user password: ");
@@ -357,10 +363,9 @@ public class ProfNetwork {
          // TODO: get name and dateofbirth here as well?
 
 	 //Creating empty contact\block lists for a user
-   // removed contact list from the query here
+     // removed contact list from the query here
 	 //String query = String.format("INSERT INTO USR (userId, password, email, contact_list) VALUES ('%s','%s','%s')", login, password, email);
-   String query = String.format("INSERT INTO USR (userId, password, email) VALUES ('%s','%s','%s')", login, password, email);
-
+         String query = String.format("INSERT INTO USR (userId, password, email) VALUES ('%s','%s','%s')", login, password, email);
          esql.executeUpdate(query);
          System.out.println ("User successfully created!");
       }catch(Exception e){
@@ -381,15 +386,54 @@ public class ProfNetwork {
 
          String query = String.format("SELECT * FROM USR WHERE userId = '%s' AND password = '%s'", login, password);
          int userNum = esql.executeQuery(query);
-	 if (userNum > 0)
-		return login;
+	     if (userNum > 0)
+		    return login;
          return null;
       }catch(Exception e){
-         System.err.println (e.getMessage ());
+         System.err.println (e.getMessage());
          return null;
       }
    }//end
 
 // Rest of the functions definition go in here
+
+   public static void UpdateProfile(ProfNetwork esql, String authorisedUser) {
+       try {
+           // Menu
+           boolean updateProfileMenu = true;
+           while(updateProfileMenu) {
+               System.out.println("UPDATE PROFILE");
+               System.out.println("---------------");
+               System.out.println("1. Change Password"); 
+               System.out.println("...................");
+               // can add more options here later
+               switch(readChoice()) {
+                   case 1: {
+                       boolean passwordsMatch = false;
+                       String newPassword = "";
+                       while(!passwordsMatch) {
+                           System.out.print("Please type your new password: ");
+                           newPassword = in.readLine();
+                           System.out.print("Please re-type your new password: ");
+                           if(newPassword.equals(in.readLine())) passwordsMatch = true;
+                           else System.out.println("Your passwords didn't match! Please try again.");
+                       }
+                       String updatePasswordQuery = String.format("UPDATE usr SET password = '%s' WHERE userid = '%s'", newPassword, authorisedUser);
+                       esql.executeUpdate(updatePasswordQuery);
+                       System.out.println("Password updated.");                      
+                       break;
+                   }
+                   default: {
+                       break;
+                   }
+               }
+               break;
+           } // end while menu
+       } // end try
+       catch (Exception e) {
+           System.out.println("Password update failed, invalid input: " + e.getMessage());
+       }
+   } // end 
+
 
 }//end ProfNetwork
