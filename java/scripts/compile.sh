@@ -5,6 +5,6 @@
 #export PATH=$JAVA_HOME/bin:$PATH
 
 # compile the java program
-javac -d $DIR/../classes $DIR/ProfNetwork.java
+javac -d $DIR/../classes $DIR/*.java
 
 

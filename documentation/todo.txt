@@ -1,3 +1,16 @@
+Notes
+
+-Many of functions, as they are now, will break if the database schema is changed. Just something to keep in mind.
+-Possibly fix the User class to properly get columns instead of having to deal with
+lists of lists of String
+-remember to add functionality to quit what you’re doing and go back to main menu at any time
+-add 3 depth constraint check for friends
+-Is it more efficient to do one "bulk" query for all users and search that over and over again, or query the db each time?
+-be careful with trailing spaces when inserting/cross referencing strings in db. This is caused by 10 char limit in database type; should we go VARCHAR or does it matter?
+-used a combination of on the fly queries and searching through preloaded user data: which is more efficient?
+-maybe come up with a numbering system for easier user interaction?
+-as of now, friend statuses can be "pending" or "friend"
+
 Useful Functions
 
 -executeUpdate
@@ -16,6 +29,11 @@ Done
   (Provided for us)
 -Change password
   Users can change password
+-Accept or reject Connection Request
+-Send Connection Request
+  User can send connection requests within 3 levels of connection. New users
+  who have 0 connections can make up to 5 new connections without this rule
+  applying. *** 3 levels of connection check not implemented yet ***
 
 TODO
 
@@ -25,13 +43,9 @@ Bare Minimum
   Users can search through entire usr relation for particular names, and return
   a list of matches/close matches. Can probably be done with regular expressions
   and some kind of simple ranking function, or use an already existing library
--Send Connection Request
-  User can send connection requests within 3 levels of connection. New users
-  who have 0 connections can make up to 5 new connections without this rule
-  applying.
--Accept or reject Connection Request
+
 -View Friends and go to friend's profile
-  each time you view a profile you can either send a connection request or send 
+  each time you view a profile you can either send a connection request or send
   a message to them
 -Send message to anyone on network
 -View Messages and have option to delete messages
