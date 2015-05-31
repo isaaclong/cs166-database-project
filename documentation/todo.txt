@@ -33,11 +33,16 @@ Done
 -Send Connection Request
   User can send connection requests within 3 levels of connection. New users
   who have 0 connections can make up to 5 new connections without this rule
-  applying. *** 3 levels of connection check not implemented yet ***
+  applying. The lvl 3 depth constraint is checked.
 
 TODO
 
 Bare Minimum
+
+-Code cleanup
+  I've gotten everything to work as intended, but often times not in the cleanest
+  ways. I'd like to clean up the code and refactor to make sure it's as high
+  quality as it can get.
 
 -Search people
   Users can search through entire usr relation for particular names, and return
@@ -51,12 +56,12 @@ Bare Minimum
 -View Messages and have option to delete messages
 
 -Scripts
-  for bulkloading data for testing, and for triggers/stored procedures/indexes
+  for bulk-loading data for testing, and for triggers/stored procedures/indexes
   if applicable
 
 -Project report
   1-2 pages describing who did what, any problems we encountered, etc. More details
-  in project requirments
+  in project requirements
 
 If We Have Time
 

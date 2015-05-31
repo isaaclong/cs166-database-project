@@ -23,6 +23,8 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * This class defines a simple embedded SQL utility class that is designed to
@@ -369,9 +371,9 @@ public class ProfNetwork {
          // (I believe that users are unique in the db); do we have to handle this?
          String checkUsersQuery = String.format("SELECT userid FROM usr WHERE userid = '%s'", login);
          int userExists = esql.executeQuery(checkUsersQuery);
-         while(userExists > 0 || login.length() > 10) {
+         while(userExists > 0 || login.length() > 30) {
             if(userExists > 0 ) System.out.print("\tSorry, that username is taken! Please try another.\n");
-            if(login.length() > 10) System.out.print("\tThat login is too long! Shorten it to a max of 10 characters.");
+            if(login.length() > 30) System.out.print("\tThat login is too long! Shorten it to a max of 30 characters.");
             System.out.print("\tEnter user login: ");
             login = in.readLine();
             checkUsersQuery = String.format("SELECT userid FROM usr WHERE userid = '%s'", login);
@@ -497,38 +499,40 @@ public class ProfNetwork {
    public static void SendRequest(ProfNetwork esql, User userData) {
        String authorisedUser = userData.username;
        try {
-           // don't check connection 3 depth constraint
-           if(freeConnectionsRemaining(esql, authorisedUser) > 0) {
-               System.out.print("Enter the user to send your friend request to or exit to exit: ");
-               String user = in.readLine();
+           System.out.print("Enter the user to send your friend request to or exit to exit: ");
+           String user = in.readLine();
+
+           // check for exit
+           if(user.equals("exit")) return;
+
+           String query = String.format("SELECT userid FROM usr WHERE userid = '%s'", user);
+           // check if user exists
+           while(esql.executeQuery(query) == 0) {
+               System.out.println("That user doesn't exist! Please enter an existing user or exit to exit: ");
+               user = in.readLine();
                if(user.equals("exit")) return;
-               String query = String.format("SELECT userid FROM usr WHERE userid = '%s'", user);
+               query = String.format("SELECT userid FROM usr WHERE userid = '%s'", user);
+           }
 
-               // check if user exists
-               while(esql.executeQuery(query) == 0) {
-                   System.out.println("That user doesn't exist! Please enter an existing user or exit to exit: ");
-                   user = in.readLine();
-                   if(user.equals("exit")) return;
-                   query = String.format("SELECT userid FROM usr WHERE userid = '%s'", user);
-               }
-
-               // check if you are already friends
-               for(int i = 0; i < userData.friends.size(); i++) {
-                   for(int j = 0; j < userData.friends.get(i).size(); j++) {
-                       if(userData.friends.get(i).get(j).trim().equals(user)) {
-                           System.out.println("You are already friends with " + user + "!");
-                           return;
-                       }
+           // check if you are already friends
+           for(int i = 0; i < userData.friends.size(); i++) {
+               for(int j = 0; j < userData.friends.get(i).size(); j++) {
+                   if(userData.friends.get(i).get(j).trim().equals(user)) {
+                       System.out.println("You are already friends with " + user + "!");
+                       return;
                    }
                }
+           }
 
-               // check if you have already sent them a request
-               String checkDuplicateRequest = String.format("SELECT * FROM connection_usr WHERE userid = '%s' AND connectionid = '%s'",authorisedUser, user);
-               if(esql.executeQuery(checkDuplicateRequest) > 0) {
-                   System.out.println("You have already sent a friend request to " + user + "! Please wait for them to respond.");
-                   return;
-               }
+           // check if you have already sent them a request
+           String checkDuplicateRequest = String.format("SELECT * FROM connection_usr WHERE userid = '%s' AND connectionid = '%s'",authorisedUser, user);
+           if(esql.executeQuery(checkDuplicateRequest) > 0) {
+               System.out.println("You have already sent a friend request to " + user + "! Please wait for them to respond.");
+               return;
+           }
 
+           // don't check connection 3 depth constraint
+           if(freeConnectionsRemaining(esql, authorisedUser) > 0) {
                query = String.format("INSERT INTO connection_usr (userid, connectionid, status) VALUES ('%s', '%s', '%s')", authorisedUser, user, "pending");
                esql.executeUpdate(query);
                System.out.println("Friend request sent.");
@@ -536,12 +540,96 @@ public class ProfNetwork {
 
            // if they have used their 5 free friends, check the connection 3 depth constraint
            else {
-               System.out.println("You've exceeded your free friends! No more friends for you (for now) :(");
+               System.out.println("You've exceeded your free friends! Let's check the lvl 3 constraint.");
+
+              Set<String> startingSet = new HashSet<String>();
+              Set<String> finalSet = new HashSet<String>();
+
+              // initialize starting set and final set with all friends of current user
+              List<String> friends1 = getColumn(userData.friends, 0);
+              List<String> friends2 = getColumn(userData.friends, 1);
+
+              //System.out.println("INITIAL STARTING SET: ");
+              for(String s : friends1) {
+                  if(!s.trim().equals(authorisedUser)) {
+                      startingSet.add(s);
+                      finalSet.add(s);
+                  }
+              }
+
+              for(String s : friends2) {
+                  if(!s.trim().equals(authorisedUser)) {
+                      startingSet.add(s);
+                      finalSet.add(s);
+                  }
+              }
+
+              //for(String s : startingSet) System.out.println(s);
+
+              for(int i = 0; i < 3; i++) {
+                  // calculate all friends of starting set and add into intermediate set and final set
+                  for(String username : startingSet) {
+                      //System.out.println("USERNAME: " + username);
+                      String getFriendsQuery = String.format("SELECT * FROM connection_usr WHERE (userid = '%s' OR connectionid = '%s') AND status = 'friend'", username, username);
+                      List<List<String>> friends = esql.executeQueryAndReturnResult(getFriendsQuery);
+                      Set<String> intermediateSet = new HashSet<String>();
+
+                      friends1 = getColumn(friends, 0);
+                      friends2 = getColumn(friends, 1);
+
+                      for(String s : friends1) {
+                          if(!s.trim().equals(authorisedUser) && !s.trim().equals(username)) {
+                              intermediateSet.add(s);
+                              finalSet.add(s);
+                          }
+                      }
+
+                      for(String s : friends2) {
+                          if(!s.trim().equals(authorisedUser) && !s.trim().equals(username)) {
+                              intermediateSet.add(s);
+                              finalSet.add(s);
+                          }
+                      }
+
+                      // new starting set is set difference of intermediate and previous startingSet
+                      //System.out.println("INTERMEDIATE SET ON ITERATION " + i);
+                      //for(String s : intermediateSet) System.out.println(s);
+                      intermediateSet.removeAll(startingSet);
+                      startingSet = intermediateSet;
+                      //System.out.println("NEW STARTING SET ON ITERATION " + i);
+                      //for(String s : startingSet) System.out.println(s);
+                  }
+              }
+
+              boolean inLevel = false;
+              for(String s : finalSet) {
+                  if(s.trim().equals(user)) {
+                      System.out.println("Found a match! You can add " + user + "! :)");
+                      inLevel = true;
+                  }
+              }
+
+              if(inLevel) {
+                  query = String.format("INSERT INTO connection_usr (userid, connectionid, status) VALUES ('%s', '%s', '%s')", authorisedUser, user, "pending");
+                  esql.executeUpdate(query);
+                  System.out.println("Friend request sent.");
+              }
+              else {
+                  System.out.println("Sorry, you cannot add " + user + ".");
+              }
            }
        }
        catch(Exception e) {
            System.out.println("An error occured when sending your connection request: " + e.getMessage());
        }
+   }
+
+   public static List<String> getColumn(List<List<String>> list, int colNum) {
+       List<String> columnVals = new ArrayList<String>();
+       for(int i = 0; i < list.size(); i++) {
+           columnVals.add(list.get(i).get(colNum).trim());
+       }
+       return columnVals;
    }
 
    /*
@@ -552,6 +640,8 @@ public class ProfNetwork {
     * Users will remain in Manage Requests after each approval or denial of a friend,
     * and they can type exit to return to main menu. They will automatically exit
     * if there are no remaining pending requests.
+    *
+    * TODO: change status to request and accept and add a reject status? (for compatability with bulk excel data)
     **/
     public static void manageRequests(ProfNetwork esql, User userData) throws IOException, SQLException {
         System.out.println("MANAGE REQUESTS");
